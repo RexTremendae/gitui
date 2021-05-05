@@ -154,24 +154,6 @@ mod tests {
     }
 
     #[test]
-    fn test_stashing() -> Result<()> {
-        let (_td, repo) = repo_init().unwrap();
-        let root = repo.path().parent().unwrap();
-        let repo_path = root.as_os_str().to_str().unwrap();
-
-        File::create(&root.join("foo.txt"))?
-            .write_all(b"test\nfoo")?;
-
-        assert_eq!(get_statuses(repo_path), (1, 0));
-
-        stash_save(repo_path, None, true, false)?;
-
-        assert_eq!(get_statuses(repo_path), (0, 0));
-
-        Ok(())
-    }
-
-    #[test]
     fn test_stashes() -> Result<()> {
         let (_td, repo) = repo_init().unwrap();
         let root = repo.path().parent().unwrap();

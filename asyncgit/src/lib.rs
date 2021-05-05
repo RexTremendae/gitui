@@ -17,10 +17,7 @@
 #![allow(clippy::module_name_repetitions)]
 #![allow(clippy::must_use_candidate)]
 #![allow(clippy::missing_errors_doc)]
-//TODO: get this in someday since expect still leads us to crashes sometimes
-// #![deny(clippy::expect_used)]
 
-mod blame;
 pub mod cached;
 mod commit_files;
 mod diff;
@@ -28,20 +25,16 @@ mod error;
 mod fetch;
 mod progress;
 mod push;
-mod push_tags;
 pub mod remote_progress;
 mod revlog;
 mod status;
 pub mod sync;
-mod tags;
 
 pub use crate::{
-    blame::{AsyncBlame, BlameParams},
     commit_files::AsyncCommitFiles,
     diff::{AsyncDiff, DiffParams, DiffType},
     fetch::{AsyncFetch, FetchRequest},
     push::{AsyncPush, PushRequest},
-    push_tags::{AsyncPushTags, PushTagsRequest},
     remote_progress::{RemoteProgress, RemoteProgressState},
     revlog::{AsyncLog, FetchStatus},
     status::{AsyncStatus, StatusParams},
@@ -49,7 +42,6 @@ pub use crate::{
         diff::{DiffLine, DiffLineType, FileDiff},
         status::{StatusItem, StatusItemType},
     },
-    tags::AsyncTags,
 };
 use std::{
     collections::hash_map::DefaultHasher,
@@ -70,15 +62,9 @@ pub enum AsyncNotification {
     ///
     CommitFiles,
     ///
-    Tags,
-    ///
     Push,
     ///
-    PushTags,
-    ///
     Fetch,
-    ///
-    Blame,
 }
 
 /// current working directory `./`

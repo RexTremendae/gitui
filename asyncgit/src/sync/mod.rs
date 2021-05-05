@@ -3,7 +3,6 @@
 //TODO: remove once we have this activated on the toplevel
 #![deny(clippy::expect_used)]
 
-pub mod blame;
 pub mod branch;
 mod commit;
 mod commit_details;
@@ -22,10 +21,8 @@ mod staging;
 mod stash;
 mod state;
 pub mod status;
-mod tags;
 pub mod utils;
 
-pub use blame::{blame_file, BlameHunk, FileBlame};
 pub use branch::{
     branch_compare_upstream, checkout_branch, config_is_pull_rebase,
     create_branch, delete_branch, get_branch_remote,
@@ -50,8 +47,7 @@ pub use hunks::{reset_hunk, stage_hunk, unstage_hunk};
 pub use ignore::add_to_ignore;
 pub use logwalker::LogWalker;
 pub use remotes::{
-    get_default_remote, get_remotes, push::AsyncProgress,
-    tags::PushTagsProgress,
+    get_default_remote, get_remotes, push::AsyncProgress
 };
 pub use reset::{reset_stage, reset_workdir};
 pub use staging::{discard_lines, stage_lines};
@@ -59,7 +55,6 @@ pub use stash::{
     get_stashes, stash_apply, stash_drop, stash_pop, stash_save,
 };
 pub use state::{repo_state, RepoState};
-pub use tags::{get_tags, CommitTags, Tags};
 pub use utils::{
     get_head, get_head_tuple, is_bare_repo, is_repo, stage_add_all,
     stage_add_file, stage_addremoved, Head,

@@ -17,7 +17,6 @@ use crossterm::event::Event;
 use itertools::Itertools;
 use std::clone::Clone;
 use std::{borrow::Cow, cell::Cell};
-use sync::CommitTags;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
@@ -68,18 +67,11 @@ impl DetailsComponent {
     pub fn set_commit(
         &mut self,
         id: Option<CommitId>,
-        tags: Option<CommitTags>,
     ) -> Result<()> {
-        self.tags.clear();
-
         self.data =
             id.and_then(|id| sync::get_commit_details(CWD, id).ok());
 
         self.scroll_top.set(0);
-
-        if let Some(tags) = tags {
-            self.tags.extend(tags)
-        }
 
         Ok(())
     }

@@ -100,17 +100,6 @@ impl Theme {
         }
     }
 
-    pub fn tags(&self, selected: bool) -> Style {
-        Style::default()
-            .fg(self.selected_tab)
-            .add_modifier(Modifier::BOLD)
-            .bg(if selected {
-                self.selection_bg
-            } else {
-                Color::Reset
-            })
-    }
-
     pub fn text(&self, enabled: bool, selected: bool) -> Style {
         match (enabled, selected) {
             (false, _) => Style::default().fg(self.disabled_fg),
@@ -149,14 +138,6 @@ impl Theme {
             style.bg(self.selection_bg)
         } else {
             style
-        }
-    }
-
-    pub fn option(&self, on: bool) -> Style {
-        if on {
-            Style::default().fg(self.diff_line_add)
-        } else {
-            Style::default().fg(self.diff_line_delete)
         }
     }
 
@@ -227,19 +208,6 @@ impl Theme {
             Style::default().fg(self.commit_author),
             selected,
         )
-    }
-
-    pub fn commit_hash_in_blame(
-        &self,
-        is_blamed_commit: bool,
-    ) -> Style {
-        if is_blamed_commit {
-            Style::default()
-                .fg(self.commit_hash)
-                .add_modifier(Modifier::BOLD)
-        } else {
-            Style::default().fg(self.commit_hash)
-        }
     }
 
     pub fn push_gauge(&self) -> Style {

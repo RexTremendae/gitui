@@ -2,7 +2,6 @@ use crate::keys::SharedKeyConfig;
 
 pub mod order {
     pub static NAV: i8 = 2;
-    pub static RARE_ACTION: i8 = 1;
 }
 
 pub static PUSH_POPUP_MSG: &str = "Push";
@@ -14,11 +13,6 @@ pub static PUSH_POPUP_STATES_DELTAS: &str = "deltas (2/3)";
 pub static PUSH_POPUP_STATES_PUSHING: &str = "pushing (3/3)";
 pub static PUSH_POPUP_STATES_TRANSFER: &str = "transfer";
 pub static PUSH_POPUP_STATES_DONE: &str = "done";
-
-pub static PUSH_TAGS_POPUP_MSG: &str = "Push Tags";
-pub static PUSH_TAGS_STATES_FETCHING: &str = "fetching";
-pub static PUSH_TAGS_STATES_PUSHING: &str = "pushing";
-pub static PUSH_TAGS_STATES_DONE: &str = "done";
 
 pub fn title_branches() -> String {
     "Branches".to_string()
@@ -37,18 +31,6 @@ pub fn tab_status(key_config: &SharedKeyConfig) -> String {
 }
 pub fn tab_log(key_config: &SharedKeyConfig) -> String {
     format!("Log [{}]", key_config.get_hint(key_config.tab_log))
-}
-pub fn tab_stashing(key_config: &SharedKeyConfig) -> String {
-    format!(
-        "Stashing [{}]",
-        key_config.get_hint(key_config.tab_stashing)
-    )
-}
-pub fn tab_stashes(key_config: &SharedKeyConfig) -> String {
-    format!(
-        "Stashes [{}]",
-        key_config.get_hint(key_config.tab_stashes)
-    )
 }
 pub fn tab_divider(_key_config: &SharedKeyConfig) -> String {
     " | ".to_string()
@@ -80,24 +62,8 @@ pub fn commit_editor_msg(_key_config: &SharedKeyConfig) -> String {
 # Lines starting with '#' will be ignored"##
         .to_string()
 }
-pub fn stash_popup_title(_key_config: &SharedKeyConfig) -> String {
-    "Stash".to_string()
-}
-pub fn stash_popup_msg(_key_config: &SharedKeyConfig) -> String {
-    "type name (optional)".to_string()
-}
 pub fn confirm_title_reset(_key_config: &SharedKeyConfig) -> String {
     "Reset".to_string()
-}
-pub fn confirm_title_stashdrop(
-    _key_config: &SharedKeyConfig,
-) -> String {
-    "Drop".to_string()
-}
-pub fn confirm_title_stashpop(
-    _key_config: &SharedKeyConfig,
-) -> String {
-    "Pop".to_string()
 }
 pub fn confirm_title_merge(
     _key_config: &SharedKeyConfig,
@@ -132,15 +98,6 @@ pub fn confirm_msg_reset_lines(
         lines
     )
 }
-pub fn confirm_msg_stashdrop(
-    _key_config: &SharedKeyConfig,
-) -> String {
-    "confirm stash drop?".to_string()
-}
-pub fn confirm_msg_stashpop(_key_config: &SharedKeyConfig) -> String {
-    "The stash will be applied and removed from the stash list. Confirm stash pop?"
-        .to_string()
-}
 pub fn confirm_msg_resethunk(
     _key_config: &SharedKeyConfig,
 ) -> String {
@@ -174,30 +131,8 @@ pub fn confirm_msg_force_push(
 pub fn log_title(_key_config: &SharedKeyConfig) -> String {
     "Commit".to_string()
 }
-pub fn blame_title(_key_config: &SharedKeyConfig) -> String {
-    "Blame".to_string()
-}
-pub fn tag_commit_popup_title(
-    _key_config: &SharedKeyConfig,
-) -> String {
-    "Tag".to_string()
-}
-pub fn tag_commit_popup_msg(_key_config: &SharedKeyConfig) -> String {
-    "type tag".to_string()
-}
-pub fn stashlist_title(_key_config: &SharedKeyConfig) -> String {
-    "Stashes".to_string()
-}
 pub fn help_title(_key_config: &SharedKeyConfig) -> String {
     "Help: all commands".to_string()
-}
-pub fn stashing_files_title(_key_config: &SharedKeyConfig) -> String {
-    "Files to Stash".to_string()
-}
-pub fn stashing_options_title(
-    _key_config: &SharedKeyConfig,
-) -> String {
-    "Options".to_string()
 }
 pub fn loading_text(_key_config: &SharedKeyConfig) -> String {
     "Loading ...".to_string()
@@ -280,8 +215,6 @@ pub mod commands {
     static CMD_GROUP_DIFF: &str = "-- Diff --";
     static CMD_GROUP_CHANGES: &str = "-- Changes --";
     static CMD_GROUP_COMMIT: &str = "-- Commit --";
-    static CMD_GROUP_STASHING: &str = "-- Stashing --";
-    static CMD_GROUP_STASHES: &str = "-- Stashes --";
     static CMD_GROUP_LOG: &str = "-- Log --";
 
     pub fn toggle_tabs(key_config: &SharedKeyConfig) -> CommandText {
@@ -299,11 +232,9 @@ pub mod commands {
     ) -> CommandText {
         CommandText::new(
             format!(
-                "Tab [{}{}{}{}]",
+                "Tab [{}{}]",
                 key_config.get_hint(key_config.tab_status),
                 key_config.get_hint(key_config.tab_log),
-                key_config.get_hint(key_config.tab_stashing),
-                key_config.get_hint(key_config.tab_stashes),
             ),
             "switch top level tabs directly",
             CMD_GROUP_GENERAL,
@@ -375,16 +306,6 @@ pub mod commands {
                 key_config.get_hint(key_config.copy),
             ),
             "copy selected commit hash to clipboard",
-            CMD_GROUP_LOG,
-        )
-    }
-    pub fn push_tags(key_config: &SharedKeyConfig) -> CommandText {
-        CommandText::new(
-            format!(
-                "Push Tags [{}]",
-                key_config.get_hint(key_config.push),
-            ),
-            "push tags to remote",
             CMD_GROUP_LOG,
         )
     }
@@ -703,103 +624,6 @@ pub mod commands {
             CMD_GROUP_GENERAL,
         )
     }
-    pub fn stashing_save(
-        key_config: &SharedKeyConfig,
-    ) -> CommandText {
-        CommandText::new(
-            format!(
-                "Save [{}]",
-                key_config.get_hint(key_config.stashing_save),
-            ),
-            "opens stash name input popup",
-            CMD_GROUP_STASHING,
-        )
-    }
-    pub fn stashing_toggle_indexed(
-        key_config: &SharedKeyConfig,
-    ) -> CommandText {
-        CommandText::new(
-            format!(
-                "Toggle Staged [{}]",
-                key_config.get_hint(key_config.stashing_toggle_index),
-            ),
-            "toggle including staged files into stash",
-            CMD_GROUP_STASHING,
-        )
-    }
-    pub fn stashing_toggle_untracked(
-        key_config: &SharedKeyConfig,
-    ) -> CommandText {
-        CommandText::new(
-            format!(
-                "Toggle Untracked [{}]",
-                key_config
-                    .get_hint(key_config.stashing_toggle_untracked),
-            ),
-            "toggle including untracked files into stash",
-            CMD_GROUP_STASHING,
-        )
-    }
-    pub fn stashing_confirm_msg(
-        key_config: &SharedKeyConfig,
-    ) -> CommandText {
-        CommandText::new(
-            format!(
-                "Stash [{}]",
-                key_config.get_hint(key_config.enter),
-            ),
-            "save files to stash",
-            CMD_GROUP_STASHING,
-        )
-    }
-    pub fn stashlist_apply(
-        key_config: &SharedKeyConfig,
-    ) -> CommandText {
-        CommandText::new(
-            format!(
-                "Apply [{}]",
-                key_config.get_hint(key_config.stash_apply),
-            ),
-            "apply selected stash",
-            CMD_GROUP_STASHES,
-        )
-    }
-    pub fn stashlist_drop(
-        key_config: &SharedKeyConfig,
-    ) -> CommandText {
-        CommandText::new(
-            format!(
-                "Drop [{}]",
-                key_config.get_hint(key_config.stash_drop),
-            ),
-            "drop selected stash",
-            CMD_GROUP_STASHES,
-        )
-    }
-    pub fn stashlist_pop(
-        key_config: &SharedKeyConfig,
-    ) -> CommandText {
-        CommandText::new(
-            format!(
-                "Pop [{}]",
-                key_config.get_hint(key_config.enter),
-            ),
-            "pop selected stash",
-            CMD_GROUP_STASHES,
-        )
-    }
-    pub fn stashlist_inspect(
-        key_config: &SharedKeyConfig,
-    ) -> CommandText {
-        CommandText::new(
-            format!(
-                "Inspect [{}]",
-                key_config.get_hint(key_config.focus_right),
-            ),
-            "open stash commit details (allows to diff files)",
-            CMD_GROUP_STASHES,
-        )
-    }
     pub fn log_details_toggle(
         key_config: &SharedKeyConfig,
     ) -> CommandText {
@@ -821,40 +645,6 @@ pub mod commands {
                 key_config.get_hint(key_config.focus_right),
             ),
             "inspect selected commit in detail",
-            CMD_GROUP_LOG,
-        )
-    }
-    pub fn blame_file(key_config: &SharedKeyConfig) -> CommandText {
-        CommandText::new(
-            format!(
-                "Blame [{}]",
-                key_config.get_hint(key_config.blame),
-            ),
-            "open blame view of selected file",
-            CMD_GROUP_LOG,
-        )
-    }
-    pub fn log_tag_commit(
-        key_config: &SharedKeyConfig,
-    ) -> CommandText {
-        CommandText::new(
-            format!(
-                "Tag [{}]",
-                key_config.get_hint(key_config.log_tag_commit),
-            ),
-            "tag commit",
-            CMD_GROUP_LOG,
-        )
-    }
-    pub fn tag_commit_confirm_msg(
-        key_config: &SharedKeyConfig,
-    ) -> CommandText {
-        CommandText::new(
-            format!(
-                "Tag [{}]",
-                key_config.get_hint(key_config.enter),
-            ),
-            "tag commit",
             CMD_GROUP_LOG,
         )
     }

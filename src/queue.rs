@@ -1,5 +1,4 @@
-use crate::tabs::StashingOptions;
-use asyncgit::sync::{diff::DiffLinePosition, CommitId, CommitTags};
+use asyncgit::sync::{diff::DiffLinePosition, CommitId};
 use bitflags::bitflags;
 use std::{cell::RefCell, collections::VecDeque, rc::Rc};
 
@@ -28,8 +27,6 @@ pub enum Action {
     Reset(ResetItem),
     ResetHunk(String, u64),
     ResetLines(String, Vec<DiffLinePosition>),
-    StashDrop(CommitId),
-    StashPop(CommitId),
     DeleteBranch(String),
     ForcePush(String, bool),
     PullMerge { incoming: usize, rebase: bool },
@@ -48,15 +45,7 @@ pub enum InternalEvent {
     /// open commit msg input
     OpenCommit,
     ///
-    PopupStashing(StashingOptions),
-    ///
-    TabSwitch,
-    ///
-    InspectCommit(CommitId, Option<CommitTags>),
-    ///
-    TagCommit(CommitId),
-    ///
-    BlameFile(String),
+    InspectCommit(CommitId),
     ///
     CreateBranch,
     ///
@@ -69,8 +58,6 @@ pub enum InternalEvent {
     Push(String, bool),
     ///
     Pull(String),
-    ///
-    PushTags,
 }
 
 ///

@@ -1,4 +1,3 @@
-mod blame_file;
 mod branchlist;
 mod changes;
 mod command;
@@ -15,15 +14,11 @@ mod inspect_commit;
 mod msg;
 mod pull;
 mod push;
-mod push_tags;
 mod rename_branch;
 mod reset;
-mod stashmsg;
-mod tag_commit;
 mod textinput;
 mod utils;
 
-pub use blame_file::BlameFileComponent;
 pub use branchlist::BranchListComponent;
 pub use changes::ChangesComponent;
 pub use command::{CommandInfo, CommandText};
@@ -39,11 +34,8 @@ pub use inspect_commit::InspectCommitComponent;
 pub use msg::MsgComponent;
 pub use pull::PullComponent;
 pub use push::PushComponent;
-pub use push_tags::PushTagsComponent;
 pub use rename_branch::RenameBranchComponent;
 pub use reset::ResetComponent;
-pub use stashmsg::StashMsgComponent;
-pub use tag_commit::TagCommitComponent;
 pub use textinput::{InputType, TextInputComponent};
 pub use utils::filetree::FileTreeItemKind;
 

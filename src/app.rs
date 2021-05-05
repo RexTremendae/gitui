@@ -2,19 +2,19 @@ use crate::{
     accessors,
     cmdbar::CommandBar,
     components::{
-        event_pump, BlameFileComponent, BranchListComponent,
+        event_pump, BranchListComponent,
         CommandBlocking, CommandInfo, CommitComponent, Component,
         CreateBranchComponent, DrawableComponent,
         ExternalEditorComponent, HelpComponent,
         InspectCommitComponent, MsgComponent, PullComponent,
-        PushComponent, PushTagsComponent, RenameBranchComponent,
-        ResetComponent, StashMsgComponent, TagCommitComponent,
+        PushComponent, RenameBranchComponent,
+        ResetComponent,
     },
     input::{Input, InputEvent, InputState},
     keys::{KeyConfig, SharedKeyConfig},
     queue::{Action, InternalEvent, NeedsUpdate, Queue},
     strings::{self, order},
-    tabs::{Revlog, StashList, Stashing, Status},
+    tabs::{Revlog, Status},
     ui::style::{SharedTheme, Theme},
 };
 use anyhow::{bail, Result};
@@ -41,14 +41,10 @@ pub struct App {
     msg: MsgComponent,
     reset: ResetComponent,
     commit: CommitComponent,
-    blame_file_popup: BlameFileComponent,
-    stashmsg_popup: StashMsgComponent,
     inspect_commit_popup: InspectCommitComponent,
     external_editor_popup: ExternalEditorComponent,
     push_popup: PushComponent,
-    push_tags_popup: PushTagsComponent,
     pull_popup: PullComponent,
-    tag_commit_popup: TagCommitComponent,
     create_branch_popup: CreateBranchComponent,
     rename_branch_popup: RenameBranchComponent,
     select_branch_popup: BranchListComponent,
@@ -56,8 +52,6 @@ pub struct App {
     tab: usize,
     revlog: Revlog,
     status_tab: Status,
-    stashing_tab: Stashing,
-    stashlist_tab: StashList,
     queue: Queue,
     theme: SharedTheme,
     key_config: SharedKeyConfig,
@@ -94,18 +88,6 @@ impl App {
                 theme.clone(),
                 key_config.clone(),
             ),
-            blame_file_popup: BlameFileComponent::new(
-                &queue,
-                sender,
-                &strings::blame_title(&key_config),
-                theme.clone(),
-                key_config.clone(),
-            ),
-            stashmsg_popup: StashMsgComponent::new(
-                queue.clone(),
-                theme.clone(),
-                key_config.clone(),
-            ),
             inspect_commit_popup: InspectCommitComponent::new(
                 &queue,
                 sender,
@@ -122,20 +104,9 @@ impl App {
                 theme.clone(),
                 key_config.clone(),
             ),
-            push_tags_popup: PushTagsComponent::new(
-                &queue,
-                sender,
-                theme.clone(),
-                key_config.clone(),
-            ),
             pull_popup: PullComponent::new(
                 &queue,
                 sender,
-                theme.clone(),
-                key_config.clone(),
-            ),
-            tag_commit_popup: TagCommitComponent::new(
-                queue.clone(),
                 theme.clone(),
                 key_config.clone(),
             ),
@@ -177,17 +148,6 @@ impl App {
                 theme.clone(),
                 key_config.clone(),
             ),
-            stashing_tab: Stashing::new(
-                sender,
-                &queue,
-                theme.clone(),
-                key_config.clone(),
-            ),
-            stashlist_tab: StashList::new(
-                &queue,
-                theme.clone(),
-                key_config.clone(),
-            ),
             queue,
             theme,
             key_config,
@@ -222,8 +182,6 @@ impl App {
         match self.tab {
             0 => self.status_tab.draw(f, chunks_main[1])?,
             1 => self.revlog.draw(f, chunks_main[1])?,
-            2 => self.stashing_tab.draw(f, chunks_main[1])?,
-            3 => self.stashlist_tab.draw(f, chunks_main[1])?,
             _ => bail!("unknown tab"),
         };
 
@@ -256,8 +214,6 @@ impl App {
                     NeedsUpdate::COMMANDS
                 } else if k == self.key_config.tab_status
                     || k == self.key_config.tab_log
-                    || k == self.key_config.tab_stashing
-                    || k == self.key_config.tab_stashes
                 {
                     self.switch_tab(k)?;
                     NeedsUpdate::COMMANDS
@@ -307,8 +263,6 @@ impl App {
         self.commit.update()?;
         self.status_tab.update()?;
         self.revlog.update()?;
-        self.stashing_tab.update()?;
-        self.stashlist_tab.update()?;
 
         self.update_commands();
 
@@ -323,12 +277,9 @@ impl App {
         log::trace!("update_git: {:?}", ev);
 
         self.status_tab.update_git(ev)?;
-        self.stashing_tab.update_git(ev)?;
         self.revlog.update_git(ev)?;
-        self.blame_file_popup.update_git(ev)?;
         self.inspect_commit_popup.update_git(ev)?;
         self.push_popup.update_git(ev)?;
-        self.push_tags_popup.update_git(ev)?;
         self.pull_popup.update_git(ev)?;
 
         //TODO: better system for this
@@ -347,12 +298,9 @@ impl App {
     pub fn any_work_pending(&self) -> bool {
         self.status_tab.anything_pending()
             || self.revlog.any_work_pending()
-            || self.stashing_tab.anything_pending()
-            || self.blame_file_popup.any_work_pending()
             || self.inspect_commit_popup.any_work_pending()
             || self.input.is_state_changing()
             || self.push_popup.any_work_pending()
-            || self.push_tags_popup.any_work_pending()
             || self.pull_popup.any_work_pending()
     }
 
@@ -375,22 +323,16 @@ impl App {
             msg,
             reset,
             commit,
-            blame_file_popup,
-            stashmsg_popup,
             inspect_commit_popup,
             external_editor_popup,
             push_popup,
-            push_tags_popup,
             pull_popup,
-            tag_commit_popup,
             create_branch_popup,
             rename_branch_popup,
             select_branch_popup,
             help,
             revlog,
-            status_tab,
-            stashing_tab,
-            stashlist_tab
+            status_tab
         ]
     );
 
@@ -408,8 +350,6 @@ impl App {
         vec![
             &mut self.status_tab,
             &mut self.revlog,
-            &mut self.stashing_tab,
-            &mut self.stashlist_tab,
         ]
     }
 
@@ -429,10 +369,6 @@ impl App {
             self.set_tab(0)?
         } else if k == self.key_config.tab_log {
             self.set_tab(1)?
-        } else if k == self.key_config.tab_stashing {
-            self.set_tab(2)?
-        } else if k == self.key_config.tab_stashes {
-            self.set_tab(3)?
         }
 
         Ok(())
@@ -515,17 +451,6 @@ impl App {
             }
             InternalEvent::Update(u) => flags.insert(u),
             InternalEvent::OpenCommit => self.commit.show()?,
-            InternalEvent::PopupStashing(opts) => {
-                self.stashmsg_popup.options(opts);
-                self.stashmsg_popup.show()?
-            }
-            InternalEvent::TagCommit(id) => {
-                self.tag_commit_popup.open(id)?;
-            }
-            InternalEvent::BlameFile(path) => {
-                self.blame_file_popup.open(&path)?;
-                flags.insert(NeedsUpdate::ALL | NeedsUpdate::COMMANDS)
-            }
             InternalEvent::CreateBranch => {
                 self.create_branch_popup.open()?;
             }
@@ -536,9 +461,8 @@ impl App {
             InternalEvent::SelectBranch => {
                 self.select_branch_popup.open()?;
             }
-            InternalEvent::TabSwitch => self.set_tab(0)?,
-            InternalEvent::InspectCommit(id, tags) => {
-                self.inspect_commit_popup.open(id, tags)?;
+            InternalEvent::InspectCommit(id) => {
+                self.inspect_commit_popup.open(id)?;
                 flags.insert(NeedsUpdate::ALL | NeedsUpdate::COMMANDS)
             }
             InternalEvent::OpenExternalEditor(path) => {
@@ -555,10 +479,6 @@ impl App {
                 self.pull_popup.fetch(branch)?;
                 flags.insert(NeedsUpdate::ALL)
             }
-            InternalEvent::PushTags => {
-                self.push_tags_popup.push_tags()?;
-                flags.insert(NeedsUpdate::ALL)
-            }
         };
 
         Ok(flags)
@@ -572,11 +492,6 @@ impl App {
         match action {
             Action::Reset(r) => {
                 if self.status_tab.reset(&r) {
-                    flags.insert(NeedsUpdate::ALL);
-                }
-            }
-            Action::StashDrop(_) | Action::StashPop(_) => {
-                if self.stashlist_tab.action_confirmed(&action) {
                     flags.insert(NeedsUpdate::ALL);
                 }
             }
@@ -661,14 +576,10 @@ impl App {
             || self.help.is_visible()
             || self.reset.is_visible()
             || self.msg.is_visible()
-            || self.stashmsg_popup.is_visible()
             || self.inspect_commit_popup.is_visible()
-            || self.blame_file_popup.is_visible()
             || self.external_editor_popup.is_visible()
-            || self.tag_commit_popup.is_visible()
             || self.create_branch_popup.is_visible()
             || self.push_popup.is_visible()
-            || self.push_tags_popup.is_visible()
             || self.pull_popup.is_visible()
             || self.select_branch_popup.is_visible()
             || self.rename_branch_popup.is_visible()
@@ -690,17 +601,13 @@ impl App {
             .split(f.size())[0];
 
         self.commit.draw(f, size)?;
-        self.stashmsg_popup.draw(f, size)?;
         self.help.draw(f, size)?;
         self.inspect_commit_popup.draw(f, size)?;
-        self.blame_file_popup.draw(f, size)?;
         self.external_editor_popup.draw(f, size)?;
-        self.tag_commit_popup.draw(f, size)?;
         self.select_branch_popup.draw(f, size)?;
         self.create_branch_popup.draw(f, size)?;
         self.rename_branch_popup.draw(f, size)?;
         self.push_popup.draw(f, size)?;
-        self.push_tags_popup.draw(f, size)?;
         self.pull_popup.draw(f, size)?;
         self.reset.draw(f, size)?;
         self.msg.draw(f, size)?;
@@ -718,8 +625,6 @@ impl App {
         let tabs = [
             Span::raw(strings::tab_status(&self.key_config)),
             Span::raw(strings::tab_log(&self.key_config)),
-            Span::raw(strings::tab_stashing(&self.key_config)),
-            Span::raw(strings::tab_stashes(&self.key_config)),
         ]
         .iter()
         .cloned()

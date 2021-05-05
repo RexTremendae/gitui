@@ -10,7 +10,7 @@ use crate::{
 };
 use anyhow::Result;
 use asyncgit::{
-    sync::{CommitId, CommitTags},
+    sync::{CommitId},
     AsyncCommitFiles, AsyncNotification,
 };
 use crossbeam_channel::Sender;
@@ -73,9 +73,8 @@ impl CommitDetailsComponent {
     pub fn set_commit(
         &mut self,
         id: Option<CommitId>,
-        tags: Option<CommitTags>,
     ) -> Result<()> {
-        self.details.set_commit(id, tags)?;
+        self.details.set_commit(id)?;
 
         if let Some(id) = id {
             if let Some((fetched_id, res)) =

@@ -13,12 +13,10 @@ use anyhow::Result;
 use asyncgit::{
     cached,
     sync::{self, CommitId},
-    AsyncLog, AsyncNotification, AsyncTags, FetchStatus, CWD,
+    AsyncLog, AsyncNotification, FetchStatus, CWD,
 };
 use crossbeam_channel::Sender;
 use crossterm::event::Event;
-use std::time::Duration;
-use sync::CommitTags;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
@@ -32,7 +30,6 @@ pub struct Revlog {
     commit_details: CommitDetailsComponent,
     list: CommitList,
     git_log: AsyncLog,
-    git_tags: AsyncTags,
     queue: Queue,
     visible: bool,
     branch_name: cached::BranchName,
@@ -61,7 +58,6 @@ impl Revlog {
                 key_config.clone(),
             ),
             git_log: AsyncLog::new(sender),
-            git_tags: AsyncTags::new(sender),
             visible: false,
             branch_name: cached::BranchName::new(CWD),
             key_config,
@@ -71,7 +67,6 @@ impl Revlog {
     ///
     pub fn any_work_pending(&self) -> bool {
         self.git_log.is_pending()
-            || self.git_tags.is_pending()
             || self.commit_details.any_work_pending()
     }
 
@@ -91,17 +86,14 @@ impl Revlog {
                 self.fetch_commits()?;
             }
 
-            self.git_tags.request(Duration::from_secs(3), false)?;
-
             self.list.set_branch(
                 self.branch_name.lookup().map(Some).unwrap_or(None),
             );
 
             if self.commit_details.is_visible() {
                 let commit = self.selected_commit();
-                let tags = self.selected_commit_tags(&commit);
 
-                self.commit_details.set_commit(commit, tags)?;
+                self.commit_details.set_commit(commit)?;
             }
         }
 
@@ -117,12 +109,6 @@ impl Revlog {
             match ev {
                 AsyncNotification::CommitFiles
                 | AsyncNotification::Log => self.update()?,
-                AsyncNotification::Tags => {
-                    if let Some(tags) = self.git_tags.last()? {
-                        self.list.set_tags(tags);
-                        self.update()?;
-                    }
-                }
                 _ => (),
             }
         }
@@ -154,17 +140,6 @@ impl Revlog {
     fn copy_commit_hash(&self) -> Result<()> {
         self.list.copy_entry_hash()?;
         Ok(())
-    }
-
-    fn selected_commit_tags(
-        &self,
-        commit: &Option<CommitId>,
-    ) -> Option<CommitTags> {
-        let tags = self.list.tags();
-
-        commit.and_then(|commit| {
-            tags.and_then(|tags| tags.get(&commit).cloned())
-        })
     }
 }
 
@@ -212,21 +187,6 @@ impl Component for Revlog {
                 } else if k == self.key_config.copy {
                     self.copy_commit_hash()?;
                     return Ok(EventState::Consumed);
-                } else if k == self.key_config.push {
-                    self.queue
-                        .borrow_mut()
-                        .push_back(InternalEvent::PushTags);
-                    return Ok(EventState::Consumed);
-                } else if k == self.key_config.log_tag_commit {
-                    return self.selected_commit().map_or(
-                        Ok(EventState::NotConsumed),
-                        |id| {
-                            self.queue.borrow_mut().push_back(
-                                InternalEvent::TagCommit(id),
-                            );
-                            Ok(EventState::Consumed)
-                        },
-                    );
                 } else if k == self.key_config.focus_right
                     && self.commit_details.is_visible()
                 {
@@ -235,10 +195,7 @@ impl Component for Revlog {
                         |id| {
                             self.queue.borrow_mut().push_back(
                                 InternalEvent::InspectCommit(
-                                    id,
-                                    self.selected_commit_tags(&Some(
-                                        id,
-                                    )),
+                                    id
                                 ),
                             );
                             Ok(EventState::Consumed)
@@ -279,12 +236,6 @@ impl Component for Revlog {
         ));
 
         out.push(CommandInfo::new(
-            strings::commands::log_tag_commit(&self.key_config),
-            true,
-            self.visible || force_all,
-        ));
-
-        out.push(CommandInfo::new(
             strings::commands::open_branch_select_popup(
                 &self.key_config,
             ),
@@ -294,12 +245,6 @@ impl Component for Revlog {
 
         out.push(CommandInfo::new(
             strings::commands::copy_hash(&self.key_config),
-            true,
-            self.visible || force_all,
-        ));
-
-        out.push(CommandInfo::new(
-            strings::commands::push_tags(&self.key_config),
             true,
             self.visible || force_all,
         ));

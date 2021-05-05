@@ -10,7 +10,6 @@ use crate::{
     ui::style::{SharedTheme, Theme},
 };
 use anyhow::Result;
-use asyncgit::sync::Tags;
 use crossterm::event::Event;
 use std::{
     borrow::Cow, cell::Cell, cmp, convert::TryFrom, time::Instant,
@@ -33,7 +32,6 @@ pub struct CommitList {
     count_total: usize,
     items: ItemBatch,
     scroll_state: (Instant, f32),
-    tags: Option<Tags>,
     current_size: Cell<(u16, u16)>,
     scroll_top: Cell<usize>,
     theme: SharedTheme,
@@ -53,7 +51,6 @@ impl CommitList {
             branch: None,
             count_total: 0,
             scroll_state: (Instant::now(), 0_f32),
-            tags: None,
             current_size: Cell::new((0, 0)),
             scroll_top: Cell::new(0),
             theme,
@@ -96,18 +93,8 @@ impl CommitList {
     }
 
     ///
-    pub const fn tags(&self) -> Option<&Tags> {
-        self.tags.as_ref()
-    }
-
-    ///
     pub fn clear(&mut self) {
         self.items.clear();
-    }
-
-    ///
-    pub fn set_tags(&mut self, tags: Tags) {
-        self.tags = Some(tags);
     }
 
     ///
@@ -190,7 +177,6 @@ impl CommitList {
     fn get_entry_to_add<'a>(
         e: &'a LogEntry,
         selected: bool,
-        tags: Option<String>,
         theme: &Theme,
         width: usize,
     ) -> Spans<'a> {
@@ -228,17 +214,6 @@ impl CommitList {
         ));
 
         txt.push(splitter.clone());
-
-        // commit tags
-        txt.push(Span::styled(
-            Cow::from(if let Some(tags) = tags {
-                format!(" {}", tags)
-            } else {
-                String::from("")
-            }),
-            theme.tags(selected),
-        ));
-
         txt.push(splitter);
 
         // commit msg
@@ -261,15 +236,9 @@ impl CommitList {
             .take(height)
             .enumerate()
         {
-            let tags = self
-                .tags
-                .as_ref()
-                .and_then(|t| t.get(&e.id))
-                .map(|tags| tags.join(" "));
             txt.push(Self::get_entry_to_add(
                 e,
                 idx + self.scroll_top.get() == selection,
-                tags,
                 &self.theme,
                 width,
             ));
